@@ -1,5 +1,12 @@
-import 'package:iprice/iprice.dart' as iprice;
+import 'dart:io';
+
+const textInput = 'text';
 
 void main(List<String> arguments) {
-  print('Hello world: ${iprice.calculate()}!');
+  stdout.writeln('Type something: ');
+  final input = stdin.readLineSync();
+
+  if (input != null) {
+    stdout.writeln('Output: \n${input.toUpperCase()}');
+  }
 }
