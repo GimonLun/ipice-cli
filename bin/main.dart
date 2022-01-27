@@ -1,27 +1,37 @@
 import 'dart:io';
 
-void main(List<String> arguments) {
-  String? _input;
+import 'package:get_it/get_it.dart';
+import 'package:iprice/iprice.dart';
+import 'package:iprice/services/io_service.dart';
 
-  while (_input == null || _input.isEmpty) {
-    stdout.write('Type something or enter x to exits: ');
+Future<void> main(List<String> arguments) async {
+  GetIt.instance.registerLazySingleton(() => IoService());
 
-    _input = stdin.readLineSync();
+  final _iPrice = IPrice();
 
-    if (_input == null || _input.isEmpty) {
-      stdout.writeln('Invalid input!');
-      continue;
-    }
+  await _iPrice.startConsole();
 
-    if (_input.toLowerCase() == 'x') {
-      break;
-    }
+  // String? _input;
 
-    stdout.writeln('Uppercase: ${_input.toUpperCase()}\n');
-    stdout.writeln('-------------------------------------------------------');
-    stdout.writeln('Transform Case: ${transformInputByChar(_input)}\n');
-    stdout.writeln('-------------------------------------------------------');
-  }
+  // while (_input == null || _input.isEmpty) {
+  //   stdout.write('Type something or enter x to exits: ');
+
+  //   _input = stdin.readLineSync();
+
+  //   if (_input == null || _input.isEmpty) {
+  //     stdout.writeln('Invalid input!');
+  //     continue;
+  //   }
+
+  //   if (_input.toLowerCase() == 'x') {
+  //     break;
+  //   }
+
+  //   stdout.writeln('Uppercase: ${_input.toUpperCase()}\n');
+  //   stdout.writeln('-------------------------------------------------------');
+  //   stdout.writeln('Transform Case: ${transformInputByChar(_input)}\n');
+  //   stdout.writeln('-------------------------------------------------------');
+  // }
 }
 
 String transformInputByChar(String input) {
