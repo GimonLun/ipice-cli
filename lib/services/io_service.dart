@@ -1,9 +1,14 @@
 import 'dart:io';
 
 class IoService {
-  String? askInput() => stdin.readLineSync();
+  String? askInput(String? label, {bool withNewLine = false}) {
+    if (label != null) {
+      print(label, withNewLine: withNewLine);
+    }
+    return stdin.readLineSync();
+  }
 
-  void print(String text, {bool withNewLine = false}) {
+  void print(String text, {bool withNewLine = true}) {
     if (withNewLine) {
       stdout.writeln(text);
 
@@ -13,7 +18,7 @@ class IoService {
     stdout.write(text);
   }
 
-  void error(String text, {bool withNewLine = false}) {
+  void error(String text, {bool withNewLine = true}) {
     if (withNewLine) {
       stderr.writeln(text);
 
