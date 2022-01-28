@@ -25,7 +25,7 @@ class IPrice {
     }
   }
 
-  void askForAction() {
+  void askForAction({Function(int)? mockAskTextForTransform}) {
     String? _input;
     while (_input == null || _input.isEmpty) {
       _input = ioService.askInput(selectActionMsg);
@@ -34,15 +34,46 @@ class IPrice {
       _input = null;
 
       if (_action == null || _action < 1 || _action > 5) {
-        ioService.error(invalidActionMsg);
+        ioService.error('$invalidActionMsg\n');
         continue;
       }
 
-      switch (_action) {
-        case 5:
-          ioService.print(byeMsg);
-          return;
+      if (_action == 5) {
+        ioService.print(byeMsg);
+        return;
       }
+
+      if (mockAskTextForTransform != null) {
+        mockAskTextForTransform(_action);
+        break;
+      } else {
+        askTextForTransform(_action);
+
+        //TODO ask is it want continue
+      }
+    }
+  }
+
+  void askTextForTransform(int action) {
+    String? _input;
+    while (_input == null || _input.isEmpty) {
+      _input = ioService.askInput(textSomethingMsg);
+
+      if (_input == null || _input.trim().isEmpty) {
+        ioService.error(invalidTextMsg);
+        continue;
+      }
+
+      break;
+    }
+
+    switch (action) {
+      case 1:
+        ioService.print('Uppercase: ${_input.toUpperCase()}\n');
+        break;
+      case 2:
+        ioService.print('Lowercase: ${_input.toLowerCase()}\n');
+        break;
     }
   }
 }
