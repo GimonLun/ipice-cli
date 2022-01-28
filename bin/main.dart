@@ -1,37 +1,12 @@
 import 'dart:io';
 
-import 'package:get_it/get_it.dart';
 import 'package:iprice/iprice.dart';
 import 'package:iprice/services/io_service.dart';
 
 Future<void> main(List<String> arguments) async {
-  GetIt.instance.registerLazySingleton(() => IoService());
+  final _iPrice = IPrice(ioService: IoService());
 
-  final _iPrice = IPrice();
-
-  await _iPrice.startConsole();
-
-  // String? _input;
-
-  // while (_input == null || _input.isEmpty) {
-  //   stdout.write('Type something or enter x to exits: ');
-
-  //   _input = stdin.readLineSync();
-
-  //   if (_input == null || _input.isEmpty) {
-  //     stdout.writeln('Invalid input!');
-  //     continue;
-  //   }
-
-  //   if (_input.toLowerCase() == 'x') {
-  //     break;
-  //   }
-
-  //   stdout.writeln('Uppercase: ${_input.toUpperCase()}\n');
-  //   stdout.writeln('-------------------------------------------------------');
-  //   stdout.writeln('Transform Case: ${transformInputByChar(_input)}\n');
-  //   stdout.writeln('-------------------------------------------------------');
-  // }
+  _iPrice.startConsole();
 }
 
 String transformInputByChar(String input) {
