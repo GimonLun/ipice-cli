@@ -150,6 +150,21 @@ void main() {
       ).called(1);
     });
 
+    test('askForAction will ask display bye message if enter action with value 5', () {
+      when(_mockIoService.askInput(any)).thenReturn('5');
+
+      final _iPrice = IPrice(ioService: _mockIoService);
+
+      _iPrice.askForAction();
+
+      verify(
+        _mockIoService.print(
+          argThat(contains(byeMsg)),
+          withNewLine: anyNamed('withNewLine'),
+        ),
+      ).called(1);
+    });
+
     test('askForAction will trigger askTextForTransform if enter value > 0 and value < 5', () {
       var count = 0;
       when(_mockIoService.askInput(any)).thenAnswer((_) => ['1', '2', '3', '4'][count++]);
@@ -200,7 +215,7 @@ void main() {
     });
 
     test('askTextForTransform will ask display error message if enter empty text', () {
-      //second time input some value to exit so it won't keep looping
+      //second time input some value to break the loop
       var count = 0;
       when(_mockIoService.askInput(any)).thenAnswer((_) => ['', 'abcd'][count++]);
 
@@ -228,7 +243,7 @@ void main() {
 
         verify(
           _mockIoService.print(
-            argThat(contains('Uppercase: ${_text.toUpperCase()}')),
+            argThat(contains('$uppercaseResultPrefix ${_text.toUpperCase()}')),
             withNewLine: anyNamed('withNewLine'),
           ),
         ).called(1);
@@ -245,11 +260,188 @@ void main() {
 
         verify(
           _mockIoService.print(
-            argThat(contains('Lowercase: ${_text.toLowerCase()}')),
+            argThat(contains('$lowercaseResultPrefix ${_text.toLowerCase()}')),
             withNewLine: anyNamed('withNewLine'),
           ),
         ).called(1);
       });
+
+      group('tranform by character', () {
+        test('askTextForTransform will trigger transformInputByChar if action is 3', () {
+          final _text = 'Abcd eFgf';
+          final _transformText = 'abCd EFgF';
+
+          when(_mockIoService.askInput(any)).thenReturn(_text);
+
+          final _iPrice = IPrice(ioService: _mockIoService);
+
+          var _isTrigger = false;
+          expect(_isTrigger, isFalse);
+
+          _iPrice.askTextForTransform(3, mockTransformInputByChar: (text) {
+            _isTrigger = true;
+            return _transformText;
+          });
+
+          expect(_isTrigger, isTrue);
+        });
+
+        test('askTextForTransform will output transform result if action is 3', () {
+          final _text = 'Abcd eFgf';
+          final _transformText = 'abCd EFgF';
+
+          when(_mockIoService.askInput(any)).thenReturn(_text);
+
+          final _iPrice = IPrice(ioService: _mockIoService);
+
+          _iPrice.askTextForTransform(3, mockTransformInputByChar: (text) => _transformText);
+
+          verify(
+            _mockIoService.print(
+              argThat(contains('$transformResultPrefix $_transformText')),
+              withNewLine: anyNamed('withNewLine'),
+            ),
+          ).called(1);
+        });
+      });
+    });
+  });
+
+  group('transformInputByChar', () {
+    test('transformInputByChar will ask for transform action for each character with expected label', () {
+      final _text = 'AbcdeFgf';
+      final _textList = _text.split('');
+
+      when(_mockIoService.askInput(any)).thenReturn('u');
+
+      final _iPrice = IPrice(ioService: _mockIoService);
+
+      _iPrice.transformInputByChar(_text);
+
+      for (var t in _textList) {
+        verify(
+          _mockIoService.askInput(
+            argThat(contains("$transformTextLabelPrefix '$t': ")),
+            withNewLine: anyNamed('withNewLine'),
+          ),
+        ).called(1);
+      }
+    });
+
+    test(
+        'transformInputByChar will ask for transform action for each character with expected label but skip empty space',
+        () {
+      final _text = 'Abcd eFgf';
+      final _textList = _text.split('');
+
+      when(_mockIoService.askInput(any)).thenReturn('u');
+
+      final _iPrice = IPrice(ioService: _mockIoService);
+
+      _iPrice.transformInputByChar(_text);
+
+      for (var t in _textList) {
+        if (t.trim().isEmpty) {
+          verifyNever(
+            _mockIoService.askInput(
+              argThat(contains("$transformTextLabelPrefix '$t': ")),
+              withNewLine: anyNamed('withNewLine'),
+            ),
+          );
+        } else {
+          verify(
+            _mockIoService.askInput(
+              argThat(contains("$transformTextLabelPrefix '$t': ")),
+              withNewLine: anyNamed('withNewLine'),
+            ),
+          ).called(1);
+        }
+      }
+    });
+
+    group('Invalid transform action selected case', () {
+      test('transformInputByChar will display error message if transform action is empty', () {
+        final _text = 'AbcdeFgf';
+
+        //second time input some value to break the loop
+        var _returnEmpty = true;
+        when(_mockIoService.askInput(any)).thenAnswer((_) {
+          if (_returnEmpty) {
+            _returnEmpty = false;
+            return '';
+          }
+
+          return 'u';
+        });
+
+        final _iPrice = IPrice(ioService: _mockIoService);
+
+        _iPrice.transformInputByChar(_text);
+
+        verify(
+          _mockIoService.print(
+            argThat(contains(invalidTransformActionMsg)),
+            withNewLine: anyNamed('withNewLine'),
+          ),
+        ).called(1);
+      });
+
+      test('transformInputByChar will display error message if transform action is null', () {
+        final _text = 'AbcdeFgf';
+
+        //second time input some value to break the loop
+        var _returnEmpty = true;
+        when(_mockIoService.askInput(any)).thenAnswer((_) {
+          if (_returnEmpty) {
+            _returnEmpty = false;
+            return null;
+          }
+
+          return 'u';
+        });
+
+        final _iPrice = IPrice(ioService: _mockIoService);
+
+        _iPrice.transformInputByChar(_text);
+
+        verify(
+          _mockIoService.print(
+            argThat(contains(invalidTransformActionMsg)),
+            withNewLine: anyNamed('withNewLine'),
+          ),
+        ).called(1);
+      });
+
+      test('transformInputByChar will display error message if transform action is not u or l', () {
+        final _text = 'Abc';
+
+        //after enter wrong few time then input some value to break the loop
+        var _count = 0;
+        when(_mockIoService.askInput(any)).thenAnswer((_) => ['asd', 'q', '1', 'u', 'u', 'u'][_count++]);
+
+        final _iPrice = IPrice(ioService: _mockIoService);
+
+        _iPrice.transformInputByChar(_text);
+
+        verify(
+          _mockIoService.print(
+            argThat(contains(invalidTransformActionMsg)),
+            withNewLine: anyNamed('withNewLine'),
+          ),
+        ).called(3);
+      });
+    });
+
+    test('transformInputByChar will return expected transform result', () {
+      final _text = 'Abcd eFgf';
+
+      var _count = 0;
+      when(_mockIoService.askInput(any)).thenAnswer((_) => ['l', 'u', 'l', 'u', 'u', 'u', 'u', 'l'][_count++]);
+
+      final _iPrice = IPrice(ioService: _mockIoService);
+
+      final _result = _iPrice.transformInputByChar(_text);
+      expect(_result, equals('aBcD EFGf'));
     });
   });
 }

@@ -17,6 +17,7 @@ class IPrice {
     ioService.print('***** 4. Output simple csv                                                *****');
     ioService.print('***** 5. Exit                                                             *****');
     ioService.print('*******************************************************************************');
+    ioService.print('');
 
     if (mockAskForAction != null) {
       mockAskForAction();
@@ -48,13 +49,14 @@ class IPrice {
         break;
       } else {
         askTextForTransform(_action);
-
-        //TODO ask is it want continue
       }
     }
   }
 
-  void askTextForTransform(int action) {
+  void askTextForTransform(
+    int action, {
+    String Function(String)? mockTransformInputByChar,
+  }) {
     String? _input;
     while (_input == null || _input.isEmpty) {
       _input = ioService.askInput(textSomethingMsg);
@@ -69,11 +71,56 @@ class IPrice {
 
     switch (action) {
       case 1:
-        ioService.print('Uppercase: ${_input.toUpperCase()}\n');
+        ioService.print('$uppercaseResultPrefix ${_input.toUpperCase()}\n');
         break;
       case 2:
-        ioService.print('Lowercase: ${_input.toLowerCase()}\n');
+        ioService.print('$lowercaseResultPrefix ${_input.toLowerCase()}\n');
+        break;
+      case 3:
+        final _transformResult =
+            mockTransformInputByChar != null ? mockTransformInputByChar(_input) : transformInputByChar(_input);
+        ioService.print('$transformResultPrefix $_transformResult\n');
         break;
     }
+  }
+
+  String transformInputByChar(String input) {
+    var _output = '';
+
+    final _inputList = input.split('');
+
+    int _index = 0;
+    while (_index < _inputList.length) {
+      final _char = _inputList.elementAt(_index);
+
+      if (_char.trim().isEmpty) {
+        _output += _char;
+        _index++;
+        continue;
+      }
+
+      final _input = ioService.askInput("$transformTextLabelPrefix '$_char': ");
+
+      if (_input == null || _input.trim().isEmpty) {
+        ioService.print(invalidTransformActionMsg);
+        continue;
+      }
+
+      final _lowercaseInput = _input.toLowerCase();
+      if (_lowercaseInput != 'u' && _lowercaseInput != 'l') {
+        ioService.print(invalidTransformActionMsg);
+        continue;
+      }
+
+      if (_lowercaseInput == 'u') {
+        _output += _char.toUpperCase();
+      } else if (_lowercaseInput == 'l') {
+        _output += _char.toLowerCase();
+      }
+
+      _index++;
+    }
+
+    return _output;
   }
 }
