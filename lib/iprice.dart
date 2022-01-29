@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:csv/csv.dart';
 import 'package:iprice/constants/msg_constants.dart';
+import 'package:iprice/data/enums/action_type.dart';
 import 'package:iprice/services/io_service.dart';
 import 'package:path/path.dart' as p;
 
@@ -38,12 +39,12 @@ class IPrice {
       final _action = int.tryParse(_input ?? '');
       _input = null;
 
-      if (_action == null || _action < 1 || _action > 5) {
+      if (_action == null || _action < supportedActionMin || _action > supportedActionMax) {
         ioService.error('$invalidActionMsg\n');
         continue;
       }
 
-      if (_action == 5) {
+      if (_action == ActionType.exit.index) {
         ioService.print(byeMsg);
         return;
       }
@@ -74,22 +75,27 @@ class IPrice {
       break;
     }
 
-    switch (action) {
-      case 1:
-        ioService.print('$uppercaseResultPrefix ${_input.toUpperCase()}\n');
-        break;
-      case 2:
-        ioService.print('$lowercaseResultPrefix ${_input.toLowerCase()}\n');
-        break;
-      case 3:
-        final _transformResult =
-            mockTransformInputByChar != null ? mockTransformInputByChar(_input) : transformInputByChar(_input);
-        ioService.print('$transformResultPrefix $_transformResult\n');
-        break;
-      case 4:
-        final _path = mockGenerateCsv != null ? mockGenerateCsv(_input) : await generateCsv(_input);
-        ioService.print('$csvCreatedPrefix $_path\n');
-        break;
+    if (action == ActionType.uppercase.index) {
+      ioService.print('$uppercaseResultPrefix ${_input.toUpperCase()}\n');
+      return;
+    }
+
+    if (action == ActionType.lowercase.index) {
+      ioService.print('$lowercaseResultPrefix ${_input.toLowerCase()}\n');
+      return;
+    }
+
+    if (action == ActionType.transformByChar.index) {
+      final _transformResult =
+          mockTransformInputByChar != null ? mockTransformInputByChar(_input) : transformInputByChar(_input);
+      ioService.print('$transformResultPrefix $_transformResult\n');
+      return;
+    }
+
+    if (action == ActionType.generateCsv.index) {
+      final _path = mockGenerateCsv != null ? mockGenerateCsv(_input) : await generateCsv(_input);
+      ioService.print('$csvCreatedPrefix $_path\n');
+      return;
     }
   }
 

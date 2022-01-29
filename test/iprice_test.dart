@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:iprice/data/enums/action_type.dart';
+
 import 'mock/services/mock_services.dart';
 import 'package:csv/csv.dart';
 import 'package:iprice/constants/msg_constants.dart';
@@ -88,7 +90,7 @@ void main() {
 
   group('askForAction', () {
     test('askForAction will ask for input with expected label', () {
-      when(_mockIoService.askInput(any)).thenReturn('5');
+      when(_mockIoService.askInput(any)).thenReturn(ActionType.exit.index.toString());
 
       final _iPrice = IPrice(ioService: _mockIoService);
 
@@ -103,9 +105,14 @@ void main() {
     });
 
     test('askForAction will ask display error message if enter action with non-digit', () {
-      //second time input choose 5 to exit so it won't keep looping
+      //second time input choose exit so it won't keep looping
       var count = 0;
-      when(_mockIoService.askInput(any)).thenAnswer((_) => ['a', '5'][count++]);
+      when(_mockIoService.askInput(any)).thenAnswer(
+        (_) => [
+          'a',
+          ActionType.exit.index.toString(),
+        ][count++],
+      );
 
       final _iPrice = IPrice(ioService: _mockIoService);
 
@@ -119,10 +126,15 @@ void main() {
       ).called(1);
     });
 
-    test('askForAction will ask display error message if enter action with value less than 1', () {
-      //second time input choose 5 to exit so it won't keep looping
+    test('askForAction will ask display error message if enter action with value less than supportedActionMin', () {
+      //second time input choose exit so it won't keep looping
       var count = 0;
-      when(_mockIoService.askInput(any)).thenAnswer((_) => ['0', '5'][count++]);
+      when(_mockIoService.askInput(any)).thenAnswer(
+        (_) => [
+          ActionType.none.index.toString(),
+          ActionType.exit.index.toString(),
+        ][count++],
+      );
 
       final _iPrice = IPrice(ioService: _mockIoService);
 
@@ -136,10 +148,15 @@ void main() {
       ).called(1);
     });
 
-    test('askForAction will ask display error message if enter action with value greater than 5', () {
-      //second time input choose 5 to exit so it won't keep looping
+    test('askForAction will ask display error message if enter action with value greater than supportedActionMax', () {
+      //second time input choose exit so it won't keep looping
       var count = 0;
-      when(_mockIoService.askInput(any)).thenAnswer((_) => ['6', '5'][count++]);
+      when(_mockIoService.askInput(any)).thenAnswer(
+        (_) => [
+          '6',
+          ActionType.exit.index.toString(),
+        ][count++],
+      );
 
       final _iPrice = IPrice(ioService: _mockIoService);
 
@@ -153,8 +170,10 @@ void main() {
       ).called(1);
     });
 
-    test('askForAction will ask display bye message if enter action with value 5', () {
-      when(_mockIoService.askInput(any)).thenReturn('5');
+    test('askForAction will ask display bye message if enter action with value ActionType.exit.index', () {
+      when(_mockIoService.askInput(any)).thenReturn(
+        ActionType.exit.index.toString(),
+      );
 
       final _iPrice = IPrice(ioService: _mockIoService);
 
@@ -168,9 +187,16 @@ void main() {
       ).called(1);
     });
 
-    test('askForAction will trigger askTextForTransform if enter value > 0 and value < 5', () {
+    test('askForAction will trigger askTextForTransform if enter value within supported action range', () {
       var count = 0;
-      when(_mockIoService.askInput(any)).thenAnswer((_) => ['1', '2', '3', '4'][count++]);
+      when(_mockIoService.askInput(any)).thenAnswer(
+        (_) => [
+          ActionType.uppercase.index.toString(),
+          ActionType.lowercase.index.toString(),
+          ActionType.transformByChar.index.toString(),
+          ActionType.generateCsv.index.toString(),
+        ][count++],
+      );
 
       final _iPrice = IPrice(ioService: _mockIoService);
 
@@ -180,22 +206,22 @@ void main() {
       _iPrice.askForAction(mockAskTextForTransform: (action) {
         _value = action;
       });
-      expect(_value, equals(1));
+      expect(_value, equals(ActionType.uppercase.index));
 
       _iPrice.askForAction(mockAskTextForTransform: (action) {
         _value = action;
       });
-      expect(_value, equals(2));
+      expect(_value, equals(ActionType.lowercase.index));
 
       _iPrice.askForAction(mockAskTextForTransform: (action) {
         _value = action;
       });
-      expect(_value, equals(3));
+      expect(_value, equals(ActionType.transformByChar.index));
 
       _iPrice.askForAction(mockAskTextForTransform: (action) {
         _value = action;
       });
-      expect(_value, equals(4));
+      expect(_value, equals(ActionType.generateCsv.index));
     });
   });
 
@@ -207,7 +233,7 @@ void main() {
 
       final _iPrice = IPrice(ioService: _mockIoService);
 
-      _iPrice.askTextForTransform(1);
+      _iPrice.askTextForTransform(ActionType.uppercase.index);
 
       verify(
         _mockIoService.askInput(
@@ -224,7 +250,7 @@ void main() {
 
       final _iPrice = IPrice(ioService: _mockIoService);
 
-      _iPrice.askTextForTransform(1);
+      _iPrice.askTextForTransform(ActionType.uppercase.index);
 
       verify(
         _mockIoService.error(
@@ -235,14 +261,14 @@ void main() {
     });
 
     group('handle action', () {
-      test('askTextForTransform will output uppercase result if action is 1', () {
+      test('askTextForTransform will output uppercase result if action is ActionType.uppercase', () {
         final _text = 'Abcd eFgf';
 
         when(_mockIoService.askInput(any)).thenReturn(_text);
 
         final _iPrice = IPrice(ioService: _mockIoService);
 
-        _iPrice.askTextForTransform(1);
+        _iPrice.askTextForTransform(ActionType.uppercase.index);
 
         verify(
           _mockIoService.print(
@@ -252,14 +278,14 @@ void main() {
         ).called(1);
       });
 
-      test('askTextForTransform will output lowercase result if action is 2', () {
+      test('askTextForTransform will output lowercase result if action is ActionType.lowercase', () {
         final _text = 'Abcd eFgf';
 
         when(_mockIoService.askInput(any)).thenReturn(_text);
 
         final _iPrice = IPrice(ioService: _mockIoService);
 
-        _iPrice.askTextForTransform(2);
+        _iPrice.askTextForTransform(ActionType.lowercase.index);
 
         verify(
           _mockIoService.print(
@@ -270,7 +296,7 @@ void main() {
       });
 
       group('tranform by character', () {
-        test('askTextForTransform will trigger transformInputByChar if action is 3', () {
+        test('askTextForTransform will trigger transformInputByChar if action is ActionType.transformByChar', () {
           final _text = 'Abcd eFgf';
           final _transformText = 'abCd EFgF';
 
@@ -281,7 +307,7 @@ void main() {
           var _isTrigger = false;
           expect(_isTrigger, isFalse);
 
-          _iPrice.askTextForTransform(3, mockTransformInputByChar: (text) {
+          _iPrice.askTextForTransform(ActionType.transformByChar.index, mockTransformInputByChar: (text) {
             _isTrigger = true;
             return _transformText;
           });
@@ -289,7 +315,7 @@ void main() {
           expect(_isTrigger, isTrue);
         });
 
-        test('askTextForTransform will output transform result if action is 3', () {
+        test('askTextForTransform will output transform result if action is ActionType.transformByChar', () {
           final _text = 'Abcd eFgf';
           final _transformText = 'abCd EFgF';
 
@@ -297,7 +323,8 @@ void main() {
 
           final _iPrice = IPrice(ioService: _mockIoService);
 
-          _iPrice.askTextForTransform(3, mockTransformInputByChar: (text) => _transformText);
+          _iPrice.askTextForTransform(ActionType.transformByChar.index,
+              mockTransformInputByChar: (text) => _transformText);
 
           verify(
             _mockIoService.print(
@@ -309,7 +336,7 @@ void main() {
       });
 
       group('generate csv', () {
-        test('askTextForTransform will trigger generateCsv if action is 4', () {
+        test('askTextForTransform will trigger generateCsv if action is ActionType.generateCsv', () {
           final _text = 'Abcd eFgf';
 
           when(_mockIoService.askInput(any)).thenReturn(_text);
@@ -319,7 +346,7 @@ void main() {
           var _isTrigger = false;
           expect(_isTrigger, isFalse);
 
-          _iPrice.askTextForTransform(4, mockGenerateCsv: (text) {
+          _iPrice.askTextForTransform(ActionType.generateCsv.index, mockGenerateCsv: (text) {
             _isTrigger = true;
             return './output.csv';
           });
@@ -327,7 +354,7 @@ void main() {
           expect(_isTrigger, isTrue);
         });
 
-        test('askTextForTransform will output transform result if action is 3', () {
+        test('askTextForTransform will output transform result if action is ActionType.generateCsv', () {
           final _text = 'Abcd eFgf';
           final _path = './output.csv';
 
@@ -335,7 +362,7 @@ void main() {
 
           final _iPrice = IPrice(ioService: _mockIoService);
 
-          _iPrice.askTextForTransform(4, mockGenerateCsv: (text) => _path);
+          _iPrice.askTextForTransform(ActionType.generateCsv.index, mockGenerateCsv: (text) => _path);
 
           verify(
             _mockIoService.print(
