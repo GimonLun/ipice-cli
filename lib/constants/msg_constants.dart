@@ -1,5 +1,10 @@
 const byeMsg = 'Thank you for using it, bye!';
 const invalidActionMsg = 'Invalid action selected, please select supported action between 1-5!';
 const invalidTextMsg = 'Invalid text!';
+const invalidTransformActionMsg = 'Invalid value detected, please enter u or l to transform current character!';
+const lowercaseResultPrefix = 'Lowercase Result:';
 const selectActionMsg = 'Select action: ';
 const textSomethingMsg = 'Type something to transform: ';
+const transformResultPrefix = 'Transform result:';
+const transformTextLabelPrefix = 'Enter u for uppercase, l for lowercase to transform';
+const uppercaseResultPrefix = 'Uppercase Result:';
