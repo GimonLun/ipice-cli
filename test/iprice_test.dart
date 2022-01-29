@@ -1,9 +1,12 @@
+import 'dart:convert';
+import 'dart:io';
+import 'mock/services/mock_services.dart';
+import 'package:csv/csv.dart';
 import 'package:iprice/constants/msg_constants.dart';
 import 'package:iprice/iprice.dart';
 import 'package:mockito/mockito.dart';
+import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
-
-import 'mock/services/mock_services.dart';
 
 void main() {
   final _mockIoService = mockIoService();
@@ -304,6 +307,44 @@ void main() {
           ).called(1);
         });
       });
+
+      group('generate csv', () {
+        test('askTextForTransform will trigger generateCsv if action is 4', () {
+          final _text = 'Abcd eFgf';
+
+          when(_mockIoService.askInput(any)).thenReturn(_text);
+
+          final _iPrice = IPrice(ioService: _mockIoService);
+
+          var _isTrigger = false;
+          expect(_isTrigger, isFalse);
+
+          _iPrice.askTextForTransform(4, mockGenerateCsv: (text) {
+            _isTrigger = true;
+            return './output.csv';
+          });
+
+          expect(_isTrigger, isTrue);
+        });
+
+        test('askTextForTransform will output transform result if action is 3', () {
+          final _text = 'Abcd eFgf';
+          final _path = './output.csv';
+
+          when(_mockIoService.askInput(any)).thenReturn(_text);
+
+          final _iPrice = IPrice(ioService: _mockIoService);
+
+          _iPrice.askTextForTransform(4, mockGenerateCsv: (text) => _path);
+
+          verify(
+            _mockIoService.print(
+              argThat(contains('$csvCreatedPrefix $_path')),
+              withNewLine: anyNamed('withNewLine'),
+            ),
+          ).called(1);
+        });
+      });
     });
   });
 
@@ -442,6 +483,41 @@ void main() {
 
       final _result = _iPrice.transformInputByChar(_text);
       expect(_result, equals('aBcD EFGf'));
+    });
+  });
+
+  group('generateCsv', () {
+    test('generateCsv will return csv generated path', () async {
+      final _text = 'Abcd eFgf';
+
+      final _iPrice = IPrice(ioService: _mockIoService);
+
+      final _result = await _iPrice.generateCsv(_text);
+      final _file = File(p.join('bin', 'output.csv'));
+
+      expect(_result, equals(_file.absolute.path));
+    });
+
+    test('generateCsv will generate a output.csv file in bin folder with expected content', () async {
+      final _text = 'Abcd eFgf';
+
+      final _iPrice = IPrice(ioService: _mockIoService);
+
+      final _result = await _iPrice.generateCsv(_text);
+      final _file = File(_result);
+
+      //read the generated file to check content
+      final _input = _file.openRead();
+      final _fields = await _input.transform(utf8.decoder).transform(CsvToListConverter()).toList();
+
+      final _readResult = [
+        _text.split('').map((t) => '$t,').toList(),
+      ];
+
+      expect(
+        _fields,
+        equals(_readResult),
+      );
     });
   });
 }

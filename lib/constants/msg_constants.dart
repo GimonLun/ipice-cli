@@ -6,5 +6,6 @@ const lowercaseResultPrefix = 'Lowercase Result:';
 const selectActionMsg = 'Select action: ';
 const textSomethingMsg = 'Type something to transform: ';
 const transformResultPrefix = 'Transform result:';
+const csvCreatedPrefix = 'Csv Created at';
 const transformTextLabelPrefix = 'Enter u for uppercase, l for lowercase to transform';
 const uppercaseResultPrefix = 'Uppercase Result:';
