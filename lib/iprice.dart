@@ -1,12 +1,17 @@
+import 'dart:io';
+
+import 'package:csv/csv.dart';
 import 'package:iprice/constants/msg_constants.dart';
+import 'package:iprice/data/enums/action_type.dart';
 import 'package:iprice/services/io_service.dart';
+import 'package:path/path.dart' as p;
 
 class IPrice {
   final IoService ioService;
 
   IPrice({required this.ioService});
 
-  void startConsole({Function()? mockAskForAction}) {
+  Future<void> startConsole({Function()? mockAskForAction}) async {
     ioService.print('\n*******************************************************************************');
     ioService.print('*****                    Welcome to text converter cli                    *****');
     ioService.print('*****                        Supported operations                         *****');
@@ -22,11 +27,11 @@ class IPrice {
     if (mockAskForAction != null) {
       mockAskForAction();
     } else {
-      askForAction();
+      await askForAction();
     }
   }
 
-  void askForAction({Function(int)? mockAskTextForTransform}) {
+  Future<void> askForAction({Function(int)? mockAskTextForTransform}) async {
     String? _input;
     while (_input == null || _input.isEmpty) {
       _input = ioService.askInput(selectActionMsg);
@@ -34,12 +39,12 @@ class IPrice {
       final _action = int.tryParse(_input ?? '');
       _input = null;
 
-      if (_action == null || _action < 1 || _action > 5) {
+      if (_action == null || _action < supportedActionMin || _action > supportedActionMax) {
         ioService.error('$invalidActionMsg\n');
         continue;
       }
 
-      if (_action == 5) {
+      if (_action == ActionType.exit.index) {
         ioService.print(byeMsg);
         return;
       }
@@ -48,15 +53,16 @@ class IPrice {
         mockAskTextForTransform(_action);
         break;
       } else {
-        askTextForTransform(_action);
+        await askTextForTransform(_action);
       }
     }
   }
 
-  void askTextForTransform(
+  Future<void> askTextForTransform(
     int action, {
     String Function(String)? mockTransformInputByChar,
-  }) {
+    String Function(String)? mockGenerateCsv,
+  }) async {
     String? _input;
     while (_input == null || _input.isEmpty) {
       _input = ioService.askInput(textSomethingMsg);
@@ -69,18 +75,32 @@ class IPrice {
       break;
     }
 
-    switch (action) {
-      case 1:
-        ioService.print('$uppercaseResultPrefix ${_input.toUpperCase()}\n');
-        break;
-      case 2:
-        ioService.print('$lowercaseResultPrefix ${_input.toLowerCase()}\n');
-        break;
-      case 3:
-        final _transformResult =
-            mockTransformInputByChar != null ? mockTransformInputByChar(_input) : transformInputByChar(_input);
-        ioService.print('$transformResultPrefix $_transformResult\n');
-        break;
+    if (_input == ':x') {
+      ioService.print('');
+      return;
+    }
+
+    if (action == ActionType.uppercase.index) {
+      ioService.print('$uppercaseResultPrefix ${_input.toUpperCase()}\n');
+      return;
+    }
+
+    if (action == ActionType.lowercase.index) {
+      ioService.print('$lowercaseResultPrefix ${_input.toLowerCase()}\n');
+      return;
+    }
+
+    if (action == ActionType.transformByChar.index) {
+      final _transformResult =
+          mockTransformInputByChar != null ? mockTransformInputByChar(_input) : transformInputByChar(_input);
+      ioService.print('$transformResultPrefix $_transformResult\n');
+      return;
+    }
+
+    if (action == ActionType.generateCsv.index) {
+      final _path = mockGenerateCsv != null ? mockGenerateCsv(_input) : await generateCsv(_input);
+      ioService.print('$csvCreatedPrefix $_path\n');
+      return;
     }
   }
 
@@ -122,5 +142,22 @@ class IPrice {
     }
 
     return _output;
+  }
+
+  Future<String> generateCsv(String input) async {
+    final _inputList = input.split('');
+
+    final _value = _inputList.map((e) => '$e,').toList();
+
+    final _csv = ListToCsvConverter().convert(
+      [
+        _value,
+      ],
+    );
+
+    final _file = File(p.join('bin', 'output.csv'));
+    await _file.writeAsString(_csv);
+
+    return _file.absolute.path;
   }
 }
