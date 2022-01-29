@@ -261,6 +261,23 @@ void main() {
     });
 
     group('handle action', () {
+      test('askTextForTransform will print a new line and return if text enter is :x', () {
+        final _text = ':x';
+
+        when(_mockIoService.askInput(any)).thenReturn(_text);
+
+        final _iPrice = IPrice(ioService: _mockIoService);
+
+        _iPrice.askTextForTransform(ActionType.uppercase.index);
+
+        verify(
+          _mockIoService.print(
+            '',
+            withNewLine: anyNamed('withNewLine'),
+          ),
+        ).called(1);
+      });
+
       test('askTextForTransform will output uppercase result if action is ActionType.uppercase', () {
         final _text = 'Abcd eFgf';
 

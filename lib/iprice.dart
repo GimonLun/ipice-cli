@@ -75,6 +75,11 @@ class IPrice {
       break;
     }
 
+    if (_input == ':x') {
+      ioService.print('');
+      return;
+    }
+
     if (action == ActionType.uppercase.index) {
       ioService.print('$uppercaseResultPrefix ${_input.toUpperCase()}\n');
       return;
